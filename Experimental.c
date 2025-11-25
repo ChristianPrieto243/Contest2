@@ -25,3 +25,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     srand(time(NULL));
     const char CLASS_NAME[] = "Project2";
+     // Define a window class
+    WNDCLASS wc = {0};
+    wc.lpfnWndProc = WindowProc;         // Window procedure function
+    wc.hInstance = hInstance;           // Handle to the application instance
+    wc.lpszClassName = CLASS_NAME;      // Name of the window class
