@@ -60,3 +60,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     return 0;
 }
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+        case WM_LBUTTONDOWN:
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+        }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
