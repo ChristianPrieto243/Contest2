@@ -30,3 +30,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.lpfnWndProc = WindowProc;         // Window procedure function
     wc.hInstance = hInstance;           // Handle to the application instance
     wc.lpszClassName = CLASS_NAME;      // Name of the window class
+    // Register the window class
+    RegisterClass(&wc);
+    // Create the window
+    HWND hwnd = CreateWindowEx(
+        0,                              // Optional window styles
+        CLASS_NAME,                     // Window class name
+        "Othello",                      // Window title
+        WS_OVERLAPPEDWINDOW,            // Window style
+        CW_USEDEFAULT, CW_USEDEFAULT,   // Position
+        800, 800,                       // Size
+        NULL,                           // Parent window
+        NULL,                           // Menu
+        hInstance,                      // Instance handle
+        NULL                            // Additional application data
+    );
