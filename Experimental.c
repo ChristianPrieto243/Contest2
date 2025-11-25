@@ -45,3 +45,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,                      // Instance handle
         NULL                            // Additional application data
     );
+     if (!hwnd) {
+        return 0; // If the window creation failed
+    }
+     // Show the window
+    ShowWindow(hwnd, nCmdShow);
+
+    // Run the message loop
+    MSG msg = {0};
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg); // pass to WindowProc
+    }
+
+    return 0;
+}
