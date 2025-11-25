@@ -16,3 +16,12 @@ boardstate mainboard;
 // Window procedure function prototype
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+     // Allocate a console window
+    AllocConsole();
+    // Redirect standard output to the console
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONIN$", "r", stdin);
+
+    srand(time(NULL));
+    const char CLASS_NAME[] = "Project2";
