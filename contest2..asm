@@ -15,3 +15,18 @@ INCLUDE Irvine32.inc
 INCLUDELIB user32.lib
 INCLUDELIB kernel32.lib
 INCLUDELIB Irvine32.lib
+
+.data
+    ; Window class and title strings
+    className   BYTE "AimTrainerWinClass", 0
+    windowTitle BYTE "Aim Trainer Game", 0
+    
+    ; Window handle 
+    hMainWnd    DWORD ?
+    
+    ; Game state variables
+    score       DWORD 0
+    targetX     DWORD 100
+    targetY     DWORD 100
+    targetSize  DWORD 30
+    targetActive DWORD 1
