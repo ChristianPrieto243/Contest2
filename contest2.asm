@@ -101,7 +101,7 @@ DrawAllTargets PROC
     mov hOldBrush, eax
 
     ; Draw a 30x30 ellipse
-    invoke Ellipse, hdc, x, y, x+30, y+30
+    invoke Ellipse, hdc, 0, 0, x+30, y+30
 
     ; Restore old brush
     invoke SelectObject, hdc, hOldBrush
@@ -226,6 +226,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
