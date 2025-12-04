@@ -19,10 +19,16 @@ INCLUDE GraphWin.inc
     
     ; Game state variables
     score       DWORD 0
-    targetX     DWORD 100
-    targetY     DWORD 100
+    targetCount     DWORD 100
+    targetMaxHealth    DWORD 100
     targetSize  DWORD 30
     targetActive DWORD 1
+
+    Target STRUCT
+        x DWORD 0 ; change to random value
+        y DWORD 0 ; change to random value
+        health WORD 3; amount of health the targets have
+    Target ENDS
 
 
 .code
@@ -102,3 +108,4 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
