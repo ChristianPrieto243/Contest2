@@ -453,16 +453,22 @@ DrawTargetLoop:
     imul eax, ebx           
     xor edx, edx
     mov ebx, targetMaxHealth
-    div ebx                 
+    div ebx         
+    imul eax, 255     
+    cdq              
+    mov ecx, 100    
+    idiv ecx  
+    mov ecx, 255
+    sub ecx, eax
+    mov eax, ecx
     mov healthPercent, eax
     
-    cmp healthPercent, 67
-    jge ColorGreen
+    mov eax, 255
+    sub eax, healthPercent
+    shl eax, 8
+    add eax, healthPercent
     
-    cmp healthPercent, 34
-    jge ColorYellow
-    
-    mov color, 000000FFh
+    mov color, eax
     jmp ColorDone
     
 ColorGreen:
@@ -728,3 +734,4 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
