@@ -56,8 +56,23 @@ WinMain PROC
     call ErrorHandler
     jmp Exit_Program
     .ENDIF
+    ; Returns a handle to the main window in EAX.
+    INVOKE CreateWindowEx, 0, ADDR className,
+    ADDR WindowName,MAIN_WINDOW_STYLE,
+    CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
+    CW_USEDEFAULT,NULL,NULL,hInstance,NULL
+    mov hMainWnd,eax
+    ; If CreateWindowEx failed, display a message & exit.
+    .IF eax == 0
+    call ErrorHandler
+    jmp Exit_Program
+    .ENDIF
+    ; Show and draw the window.
+    INVOKE ShowWindow, hMainWnd, SW_SHOW
+    INVOKE UpdateWindow, hMainWnd
 Exit_Program:
 INVOKE ExitProcess,0
 WinMain ENDP
+
 
 
