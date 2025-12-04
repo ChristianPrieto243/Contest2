@@ -74,7 +74,7 @@ DrawAllTargets PROC
     ; Ellipse parameters: hdc, left, top, right, bottom
     ; For circle centered at (100,100) with radius 30:
     ; left = 70, top = 70, right = 130, bottom = 130
-    INVOKE Ellipse, hdc, targetSize, targetSize, targetSize, targetSize
+    INVOKE Ellipse, hdc, -targetSize, -targetSize, targetSize, targetSize
     
     ; TODO: Loop through targets array and draw all
     ; TODO: Change color based on target health
@@ -185,4 +185,5 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
