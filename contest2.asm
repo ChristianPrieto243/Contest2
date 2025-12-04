@@ -51,6 +51,8 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
     targetMaxHealth    DWORD 100
     targetSize  DWORD 30
     targetActive DWORD 1
+    globalx DWORD 100
+    globaly DWORD 100
     
     ; Target structure definition
     Target STRUCT
@@ -79,8 +81,8 @@ DrawAllTargets PROC
     LOCAL hBrush:DWORD
     LOCAL hOldBrush:DWORD
 
-    mov x, 150
-    mov y, 150
+    mov x, globalx
+    mov y, globaly
     mov color, 000000FFh        ; red dot (RGB(255,0,0)
 
     ; Create solid brush for the fill
@@ -136,7 +138,10 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         ; Extract X,Y from lParam
         pushad
         mov eax, lParam  ; Low word = X, High word = Y
-        
+        mov globalx, ax
+        shr eax, 16
+        mov globaly, ax
+    
         ; TODO: Check if hit target (distance formula)
         ; TODO: Update targets array (swap-and-pop if killed)
         ; TODO: Call InvalidateRect to trigger redraw
@@ -211,6 +216,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
