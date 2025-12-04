@@ -1,44 +1,94 @@
 ; contest2.asm - Aim Trainer Game
-; Win32 GUI application using GraphWin.inc 
+; Win32 GUI application
 INCLUDE Irvine32.inc
 INCLUDE GraphWin.inc
 INCLUDELIB gdi32.lib
+INCLUDELIB user32.lib
 
-; NOTE: Additional Win32 constants and structures not in GraphWin.inc
-; Learned from MSDN documentation
+; NOTE: Additional Win32 constants and structures
 WM_PAINT = 0Fh
+WM_LBUTTONDOWN = 201h
+WM_CLOSE = 10h
+TRANSPARENT = 1
 
+; Only define PAINTSTRUCT if GraphWin hasn't already defined it
+IFNDEF PAINTSTRUCT
 PAINTSTRUCT STRUCT
-    hdc         DWORD ?
-    fErase      DWORD ?
-    rcPaint_left   DWORD ?
-    rcPaint_top    DWORD ?
-    rcPaint_right  DWORD ?
-    rcPaint_bottom DWORD ?
-    fRestore    DWORD ?
-    fIncUpdate  DWORD ?
-    rgbReserved BYTE 32 DUP(?)
+    hdc             DWORD ?
+    fErase          DWORD ?
+    rcPaint_left    DWORD ?
+    rcPaint_top     DWORD ?
+    rcPaint_right   DWORD ?
+    rcPaint_bottom  DWORD ?
+    fRestore        DWORD ?
+    fIncUpdate      DWORD ?
+    rgbReserved     BYTE 32 DUP(?)
 PAINTSTRUCT ENDS
+ENDIF
 
-; External GDI function declarations
-CreateSolidBrush PROTO, color:DWORD
-DeleteObject PROTO, hObject:DWORD
-SelectObject PROTO, hdc:DWORD, hObject:DWORD
-InvalidateRect PROTO, hWnd:DWORD, lpRect:DWORD, bErase:DWORD
-GetDC PROTO, hWnd:DWORD
-ReleaseDC PROTO, hWnd:DWORD, hdc:DWORD
-DeleteDC PROTO, hdc:DWORD
+; ========================================================
+; SAFE GDI PROTO DECLARATIONS
+; ========================================================
 
-; NOTE: Double buffering functions not learned in class
-; Learned from MSDN documentation to prevent flicker
-CreateCompatibleDC PROTO, hdc:DWORD
-CreateCompatibleBitmap PROTO, hdc:DWORD, nWidth:DWORD, nHeight:DWORD
-BitBlt PROTO, hdcDest:DWORD, xDest:DWORD, yDest:DWORD, nWidth:DWORD, nHeight:DWORD, hdcSrc:DWORD, xSrc:DWORD, ySrc:DWORD, rop:DWORD
-Rectangle PROTO, hdc:DWORD, nLeft:DWORD, nTop:DWORD, nRight:DWORD, nBottom:DWORD
+IFNDEF CreateSolidBrush
+    CreateSolidBrush PROTO, :DWORD
+ENDIF
 
-BeginPaint PROTO, hwnd:DWORD, lpPaint:DWORD
-EndPaint PROTO, hwnd:DWORD, lpPaint:DWORD
-Ellipse PROTO, hdc:DWORD, nLeft:DWORD, nTop:DWORD, nRight:DWORD, nBottom:DWORD
+IFNDEF DeleteObject
+    DeleteObject PROTO, :DWORD
+ENDIF
+
+IFNDEF SelectObject
+    SelectObject PROTO, :DWORD, :DWORD
+ENDIF
+
+IFNDEF InvalidateRect
+    InvalidateRect PROTO, :DWORD, :DWORD, :DWORD
+ENDIF
+
+IFNDEF GetDC
+    GetDC PROTO, :DWORD
+ENDIF
+
+IFNDEF ReleaseDC
+    ReleaseDC PROTO, :DWORD, :DWORD
+ENDIF
+
+IFNDEF DeleteDC
+    DeleteDC PROTO, :DWORD
+ENDIF
+
+IFNDEF TextOutA
+    TextOutA PROTO, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+ENDIF
+
+IFNDEF CreateCompatibleDC
+    CreateCompatibleDC PROTO, :DWORD
+ENDIF
+
+IFNDEF CreateCompatibleBitmap
+    CreateCompatibleBitmap PROTO, :DWORD, :DWORD, :DWORD
+ENDIF
+
+IFNDEF BitBlt
+    BitBlt PROTO, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+ENDIF
+
+IFNDEF Rectangle
+    Rectangle PROTO, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+ENDIF
+
+IFNDEF BeginPaint
+    BeginPaint PROTO, :DWORD, :DWORD
+ENDIF
+
+IFNDEF EndPaint
+    EndPaint PROTO, :DWORD, :DWORD
+ENDIF
+
+IFNDEF Ellipse
+    Ellipse PROTO, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+ENDIF
 
 ; BitBlt constant
 SRCCOPY = 00CC0020h
@@ -48,6 +98,7 @@ SRCCOPY = 00CC0020h
     WindowName BYTE "Aim Trainer Game", 0
     className  BYTE "AimTrainerWinClass", 0
     
+    ; MainWin WNDCLASS structure
     MainWin WNDCLASS <NULL, WinProc, NULL, NULL, NULL, NULL, NULL, \
                       COLOR_WINDOW, NULL, className>
     
@@ -67,11 +118,15 @@ SRCCOPY = 00CC0020h
     ; Game state variables
     score       DWORD 0
     targetCount     DWORD 100
-    targetMaxHealth    DWORD 3
+    targetMaxHealth     DWORD 3
     targetSize  DWORD 30
     targetActive DWORD 1
     globalx DWORD 100
     globaly DWORD 100
+    
+    ; Score display
+    scoreLabel BYTE "Score: ", 0
+    scoreBuffer BYTE 12 DUP(0)
     
     Target STRUCT
         x DWORD 0
@@ -88,9 +143,6 @@ SRCCOPY = 00CC0020h
 
 ;-----------------------------------------------------
 randomNum PROC
-    ; Input: EAX = max value
-    ; Output: EAX = random number from 0 to (input-1)
-    ; Uses Irvine32 RandomRange (chapter 9)
     call RandomRange
     ret
 randomNum ENDP
@@ -108,14 +160,12 @@ initializeTargets PROC
     mov esi, OFFSET targets
     
 TargetLoop:
-    ; Calculate address of current target
     mov eax, ecx
     mov ebx, SIZEOF Target
     imul eax, ebx
     add eax, esi
     mov ebx, eax
     
-    ; Generate random X
     push ebx
     push edx
     mov eax, nClientWidth
@@ -126,7 +176,6 @@ TargetLoop:
     pop ebx
     mov (Target PTR [ebx]).x, eax
     
-    ; Generate random Y
     push ebx
     push edx
     mov eax, nClientHeight
@@ -137,7 +186,6 @@ TargetLoop:
     pop ebx
     mov (Target PTR [ebx]).y, eax
     
-    ; Set health
     mov (Target PTR [ebx]).health, edx
     
     inc ecx
@@ -153,6 +201,59 @@ TargetLoop:
 initializeTargets ENDP
 
 ;-----------------------------------------------------
+DrawScore PROC
+    push eax
+    push ecx
+    push edx
+    push edi
+    
+    mov edi, OFFSET scoreBuffer
+    mov esi, OFFSET scoreLabel
+    
+CopyLabel:
+    mov al, [esi]
+    test al, al
+    jz DoneLabel
+    mov [edi], al
+    inc esi
+    inc edi
+    jmp CopyLabel
+    
+DoneLabel:
+    mov eax, score
+    mov ebx, 10
+    mov ecx, 0
+    
+PushDigits:
+    xor edx, edx
+    div ebx
+    push edx
+    inc ecx
+    test eax, eax
+    jnz PushDigits
+    
+PopDigits:
+    pop eax
+    add al, '0'
+    mov [edi], al
+    inc edi
+    loop PopDigits
+    
+    mov BYTE PTR [edi], 0
+    
+    mov ecx, edi
+    sub ecx, OFFSET scoreBuffer
+    
+    INVOKE TextOutA, hMemDC, 10, 10, OFFSET scoreBuffer, ecx
+    
+    pop edi
+    pop edx
+    pop ecx
+    pop eax
+    ret
+DrawScore ENDP
+
+;-----------------------------------------------------
 DrawAllTargets PROC
     LOCAL L:DWORD
     LOCAL R:DWORD
@@ -163,8 +264,8 @@ DrawAllTargets PROC
     LOCAL hBrush_BG:DWORD
     LOCAL hOldBrush:DWORD
     LOCAL currentTarget:DWORD
+    LOCAL healthPercent:DWORD
 
-    ; Fill background black
     invoke CreateSolidBrush, 00000000h
     mov hBrush_BG, eax
     invoke SelectObject, hMemDC, hBrush_BG
@@ -173,7 +274,6 @@ DrawAllTargets PROC
     invoke SelectObject, hMemDC, hOldBrush
     invoke DeleteObject, hBrush_BG
     
-    ; Loop through all targets and draw each one
     push ecx
     push esi
     push eax
@@ -183,7 +283,6 @@ DrawAllTargets PROC
     mov esi, OFFSET targets
     
 DrawTargetLoop:
-    ; Calculate address of current target
     mov eax, 9
     sub eax, ecx
     mov ebx, SIZEOF Target
@@ -191,12 +290,10 @@ DrawTargetLoop:
     add eax, esi
     mov currentTarget, eax
     
-    ; Get target position
     mov ebx, currentTarget
     mov eax, (Target PTR [ebx]).x
     mov edx, (Target PTR [ebx]).y
     
-    ; Calculate bounds
     push ecx
     mov ecx, targetSize
     mov L, eax
@@ -209,28 +306,62 @@ DrawTargetLoop:
     add B, ecx
     pop ecx
     
-    ; Color based on health - for now just green
-    mov color, 0000FF00h
+    push ecx
+    push edx
     
-    ; Create brush
+    mov ebx, currentTarget
+    mov eax, (Target PTR [ebx]).health
+    
+    mov ebx, 100
+    imul eax, ebx           
+    xor edx, edx
+    mov ebx, targetMaxHealth
+    div ebx                 
+    mov healthPercent, eax
+    
+    cmp healthPercent, 67
+    jge ColorGreen
+    
+    cmp healthPercent, 34
+    jge ColorYellow
+    
+    mov color, 000000FFh
+    jmp ColorDone
+    
+ColorGreen:
+    mov color, 0000FF00h
+    jmp ColorDone
+    
+ColorYellow:
+    mov color, 0000FFFFh
+    
+ColorDone:
+    pop edx
+    pop ecx
+    
     push ecx
     invoke CreateSolidBrush, color
     mov hBrush_Target, eax
     
-    ; Select brush and draw
     invoke SelectObject, hMemDC, hBrush_Target
     invoke Ellipse, hMemDC, L, T, R, B
     
-    ; Cleanup
     invoke DeleteObject, hBrush_Target
     pop ecx
     
-    loop DrawTargetLoop
+    ; FIX 1: Replace loop with manual jump to solve range issue
+    dec ecx
+    jz DoneDrawing
+    jmp DrawTargetLoop
+    
+DoneDrawing:
     
     pop ebx
     pop eax
     pop esi
     pop ecx
+    
+    call DrawScore
     
     ret
 DrawAllTargets ENDP
@@ -239,116 +370,131 @@ DrawAllTargets ENDP
 WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
     mov eax, localMsg
     
-    .IF eax == WM_PAINT
-        INVOKE BeginPaint, hWnd, ADDR ps
-        mov hdc, eax
-        
-        call DrawAllTargets
-        
-        INVOKE BitBlt, hdc, 0, 0, nClientWidth, nClientHeight, hMemDC, 0, 0, SRCCOPY
-        
-        INVOKE EndPaint, hWnd, ADDR ps
-        
-        invoke InvalidateRect, hWnd, NULL, FALSE
-        jmp WinProcExit
-        
-    .ELSEIF eax == WM_LBUTTONDOWN
-        pushad
-        
-        ; Extract click coordinates
-        mov eax, lParam
-        movzx ebx, ax           ; EBX = click X
-        shr eax, 16
-        movzx edx, ax           ; EDX = click Y
-        
-        ; Loop through all targets to check for hit
-        mov ecx, 9
-        mov esi, OFFSET targets
-        
-    CheckHitLoop:
-        ; Calculate current target address
-        mov eax, 9
-        sub eax, ecx
-        push ebx
-        mov ebx, SIZEOF Target
-        imul eax, ebx
-        pop ebx
-        add eax, esi
-        push eax                ; Save target address
-        
-        ; Get target position
-        mov edi, eax
-        mov eax, (Target PTR [edi]).x
-        mov edi, (Target PTR [edi]).y
-        
-        ; Calculate distance squared
-        ; dx = clickX - targetX
-        sub eax, ebx
-        imul eax, eax           ; dx squared
-        
-        ; dy = clickY - targetY  
-        push eax
-        mov eax, edx
-        sub eax, edi
-        imul eax, eax           ; dy squared
-        
-        ; distance squared = dx squared + dy squared
-        pop edi
-        add eax, edi
-        
-        ; Check if hit (distance squared <= radius squared)
-        mov edi, targetSize
-        imul edi, edi           ; radius squared
-        
-        .IF eax <= edi
-            ; HIT! Respawn this target at new position
-            pop edi             ; Get target address back
-            
-            ; Generate new random X
-            push ebx
-            push ecx
-            push edx
-            mov eax, nClientWidth
-            sub eax, 60
-            call randomNum
-            add eax, 30
-            mov (Target PTR [edi]).x, eax
-            
-            ; Generate new random Y
-            mov eax, nClientHeight
-            sub eax, 60
-            call randomNum
-            add eax, 30
-            mov (Target PTR [edi]).y, eax
-            pop edx
-            pop ecx
-            pop ebx
-            
-            ; Increment score
-            inc score
-            
-            ; Exit loop - we hit one
-            jmp HitDetected
-        .ENDIF
-        
-        pop eax                 ; Clean up stack
-        loop CheckHitLoop
-        
-    HitDetected:
-        popad
-        jmp WinProcExit
-        
-    .ELSEIF eax == WM_CLOSE
-        INVOKE SelectObject, hMemDC, hOldBitmap
-        INVOKE DeleteObject, hBitmap
-        INVOKE DeleteDC, hMemDC
-        INVOKE PostQuitMessage, 0
-        jmp WinProcExit
-        
-    .ELSE
-        INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
-        jmp WinProcExit
-    .ENDIF
+    cmp eax, WM_PAINT
+    jne CheckClick      
+    jmp HandlePaint     
+    
+CheckClick:
+    cmp eax, WM_LBUTTONDOWN
+    jne CheckClose      
+    jmp HandleClick     
+    
+CheckClose:
+    cmp eax, WM_CLOSE
+    jne DoDefault       
+    jmp HandleClose     
+    
+DoDefault:
+    INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
+    jmp WinProcExit
+    
+HandlePaint:
+    INVOKE BeginPaint, hWnd, ADDR ps
+    mov hdc, eax
+    call DrawAllTargets
+    INVOKE BitBlt, hdc, 0, 0, nClientWidth, nClientHeight, hMemDC, 0, 0, SRCCOPY
+    INVOKE EndPaint, hWnd, ADDR ps
+    invoke InvalidateRect, hWnd, NULL, FALSE
+    jmp WinProcExit
+    
+HandleClick:
+    pushad
+    mov eax, lParam
+    movzx ebx, ax
+    shr eax, 16
+    movzx edx, ax
+    
+    mov ecx, 9
+    mov esi, OFFSET targets
+    
+CheckHitLoop:
+    mov eax, 9
+    sub eax, ecx
+    push ebx
+    mov ebx, SIZEOF Target
+    imul eax, ebx
+    pop ebx
+    add eax, esi
+    push eax
+    
+    mov edi, eax
+    mov eax, (Target PTR [edi]).x
+    mov edi, (Target PTR [edi]).y
+    
+    sub eax, ebx
+    imul eax, eax
+    push eax
+    mov eax, edx
+    sub eax, edi
+    imul eax, eax
+    pop edi
+    add eax, edi
+    
+    mov edi, targetSize
+    imul edi, edi
+    
+    ; FIX 3: Replaced jg with jle/jmp pattern
+    cmp eax, edi
+    jle IsHit           ; If distance <= radius, it is a hit
+    jmp NotHit          ; Otherwise, jump far away
+    
+IsHit:
+    ; HIT!
+    pop edi
+    push ebx
+    push ecx
+    push edx
+    
+    mov eax, (Target PTR [edi]).health
+    dec eax
+    
+    cmp eax, 0
+    jg StillAlive
+    
+    ; Target Dead
+    mov eax, nClientWidth
+    sub eax, 60
+    call randomNum
+    add eax, 30
+    mov (Target PTR [edi]).x, eax
+    
+    mov eax, nClientHeight
+    sub eax, 60
+    call randomNum
+    add eax, 30
+    mov (Target PTR [edi]).y, eax
+    
+    mov eax, targetMaxHealth
+    mov (Target PTR [edi]).health, eax
+    inc score
+    jmp DoneDamage
+    
+StillAlive:
+    mov (Target PTR [edi]).health, eax
+    
+DoneDamage:
+    pop edx
+    pop ecx
+    pop ebx
+    jmp HitDetected
+    
+NotHit:
+    pop eax
+    ; FIX 2: Replace loop with manual jump to solve range issue
+    dec ecx
+    jz HitDetected      ; If loop finishes (ecx=0), no hit was found, exit
+    jmp CheckHitLoop    ; Otherwise continue loop
+    
+HitDetected:
+    popad
+    jmp WinProcExit
+    
+HandleClose:
+    INVOKE SelectObject, hMemDC, hOldBitmap
+    INVOKE DeleteObject, hBitmap
+    INVOKE DeleteDC, hMemDC
+    INVOKE PostQuitMessage, 0
+    jmp WinProcExit
     
 WinProcExit:
     ret
@@ -359,13 +505,10 @@ WinMain PROC
     INVOKE GetModuleHandle, NULL
     mov hInstance, eax
     mov MainWin.hInstance, eax
-    
     INVOKE LoadIcon, NULL, IDI_APPLICATION
     mov MainWin.hIcon, eax
-    
     INVOKE LoadCursor, NULL, IDC_ARROW
     mov MainWin.hCursor, eax
-    
     INVOKE RegisterClass, ADDR MainWin
     .IF eax == 0
         jmp Exit_Program
@@ -377,7 +520,6 @@ WinMain PROC
            nClientWidth, nClientHeight,
            NULL, NULL, hInstance, NULL
     mov hMainWnd, eax
-    
     .IF eax == 0
         jmp Exit_Program
     .ENDIF
@@ -385,22 +527,16 @@ WinMain PROC
     INVOKE ShowWindow, hMainWnd, SW_SHOW
     INVOKE UpdateWindow, hMainWnd
     
-    ; Set up double buffering
     INVOKE GetDC, hMainWnd
     mov hdc, eax
-    
     INVOKE CreateCompatibleDC, hdc
     mov hMemDC, eax
-    
     INVOKE CreateCompatibleBitmap, hdc, nClientWidth, nClientHeight
     mov hBitmap, eax
-    
     INVOKE SelectObject, hMemDC, hBitmap
     mov hOldBitmap, eax
-    
     INVOKE ReleaseDC, hMainWnd, hdc
     
-    ; Initialize all targets
     call initializeTargets
     
 Message_Loop:
