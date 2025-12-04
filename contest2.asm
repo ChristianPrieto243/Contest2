@@ -29,7 +29,7 @@ INCLUDE GraphWin.inc
         y DWORD 0 ; change to random value
         health WORD 3; amount of health the targets have
     Target ENDS
-
+    targets Target 9 DUP(<>) ; Create targets with max count
 
 .code
 
@@ -108,4 +108,5 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
