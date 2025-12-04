@@ -114,8 +114,8 @@ SRCCOPY = 00CC0020h
     
     score       DWORD 0
     targetCount     DWORD 100
-    targetMaxHealth     DWORD 3
-    targetSize  DWORD 30
+    targetMaxHealth     DWORD 4
+    targetSize  DWORD 10
     targetActive DWORD 1
     globalx DWORD 100
     globaly DWORD 100
@@ -142,7 +142,7 @@ SRCCOPY = 00CC0020h
     Target STRUCT
         x DWORD 0
         y DWORD 0
-        health DWORD 3
+        health DWORD 4
     Target ENDS
     targets Target 9 DUP(<>)
     
@@ -433,6 +433,7 @@ DrawTargetLoop:
     
     push ecx
     mov ecx, targetSize
+    imul ecx, (Target PTR [ebx]).health
     mov L, eax
     sub L, ecx
     mov R, eax
@@ -565,6 +566,8 @@ CheckHitLoop:
     
     mov edi, eax
     mov eax, (Target PTR [edi]).x
+    push ecx
+    mov ecx, (Target PTR [edi]).health
     mov edi, (Target PTR [edi]).y
     
     sub eax, ebx
@@ -577,7 +580,9 @@ CheckHitLoop:
     add eax, edi
     
     mov edi, targetSize
+    imul edi, ecx
     imul edi, edi
+    pop ecx
     
     cmp eax, edi
     jle IsHit
@@ -724,5 +729,4 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
-
 
