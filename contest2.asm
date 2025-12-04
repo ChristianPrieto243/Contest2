@@ -2,7 +2,14 @@
 ; Win32 GUI application using GraphWin.inc 
 INCLUDE Irvine32.inc
 INCLUDE GraphWin.inc
+
+INCLUDE windows.inc
+INCLUDE user32.inc
+INCLUDE gdi32.inc
+
+INCLUDELIB user32.lib
 INCLUDELIB gdi32.lib
+
 
 ; NOTE: Additional Win32 constants and structures not in GraphWin.inc
 ; Learned from MSDN documentation
@@ -203,6 +210,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
