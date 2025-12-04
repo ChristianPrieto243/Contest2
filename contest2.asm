@@ -77,18 +77,25 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 DrawAllTargets PROC
 ; Draws all active targets on the window
 
-    LOCAL x:DWORD
-    LOCAL y:DWORD
+    LOCAL L:DWORD ;left
+    LOCAL R:DWORD ;right
+    LOCAL T:DWORD ;top
+    LOCAL B:DWORD ;bottom
     LOCAL color:DWORD
     LOCAL hBrush:DWORD
     LOCAL hOldBrush:DWORD
 
     push eax
     mov eax, globalx
-    mov DWORD PTR x, eax
-    
+    mov DWORD PTR L, eax
+    sub L, 30
+    mov DWORD PTR R, eax
+    add R, 30
     mov eax, globaly
-    mov DWORD PTR y, eax
+    mov DWORD PTR T, eax
+    sub T, 30
+    mov DWORD PTR B, eax
+    add B, 30
     pop eax
     mov color, 000000FFh        ; red dot (RGB(255,0,0)
 
@@ -101,7 +108,8 @@ DrawAllTargets PROC
     mov hOldBrush, eax
 
     ; Draw a 30x30 ellipse
-    invoke Ellipse, hdc, 0, 0, x+30, y+30
+    
+    invoke Ellipse, hdc, L, T, R, B
 
     ; Restore old brush
     invoke SelectObject, hdc, hOldBrush
@@ -226,6 +234,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
