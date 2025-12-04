@@ -27,7 +27,8 @@ EXTERN DeleteObject     :PROTO :DWORD
 EXTERN SelectObject     :PROTO :DWORD, :DWORD
 EXTERN Ellipse          :PROTO :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
 EXTERN InvalidateRect :PROTO :DWORD, :DWORD, :DWORD
-
+EXTERN hMemDC:DWORD  ; frame mem to avoid flicker
+EXTERN Rectangle:PROC
 
 ; External GDI function declarations
 BeginPaint PROTO, hwnd:DWORD, lpPaint:DWORD
@@ -120,7 +121,8 @@ DrawAllTargets PROC
     LOCAL T:DWORD ;top
     LOCAL B:DWORD ;bottom
     LOCAL color:DWORD
-    LOCAL hBrush:DWORD
+    LOCAL hBrush_Red:DWORD
+    LOCAL hBrush_Black:DWORD
     LOCAL hOldBrush:DWORD
 
     push eax
@@ -140,20 +142,30 @@ DrawAllTargets PROC
     pop eax
     mov color, 000000FFh        ; red dot (RGB(255,0,0)
 
+    
+    ; fill background
+    invoke CreateSolidBrush, 00000000h       ; Black (0x00BBGGRR)
+    mov hBrush_Black, eax
+    ; Select Black Brush
+    invoke SelectObject, hMemDC, hBrush_Black
+    mov hOldBrush, eax ; Save the brush originally selected in hMemDC
+    invoke Rectangle, hMemDC, 0, 0, nClientWidth, nClientHeight ; Fill the whole background
+    
     ; Create solid brush for the fill
     invoke CreateSolidBrush, color
     mov hBrush, eax
-
+    
     ; Select brush
     invoke SelectObject, hdc, hBrush
     mov hOldBrush, eax
 
-    ; Draw a 30x30 ellipse
     
-    invoke Ellipse, hdc, L, T, R, B
+
+    ; Draw a targsize ellipse
+    invoke Ellipse, hMemDC, L, T, R, B
 
     ; Restore old brush
-    invoke SelectObject, hdc, hOldBrush
+    invoke SelectObject, hMemDC, hOldBrush
 
     ; Delete new brush
     invoke DeleteObject, hBrush
@@ -184,9 +196,11 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         
         ; Call our drawing function
         invoke DrawAllTargets
-        
+
+        INVOKE BitBlt, hdc, 0, 0, nClientWidth, nClientHeight, hMemDC, 0, 0, SRCCOPY
         ; End painting - release device context
         INVOKE EndPaint, hWnd, ADDR ps
+        
         invoke InvalidateRect, hWnd, NULL, TRUE ; use for constant updates like a game
         jmp WinProcExit
         
@@ -275,6 +289,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
