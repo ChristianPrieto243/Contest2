@@ -86,16 +86,19 @@ DrawAllTargets PROC
     LOCAL hOldBrush:DWORD
 
     push eax
+    push ecx
+    mov ecx, targetSize
     mov eax, globalx
     mov DWORD PTR L, eax
-    sub L, 30
+    sub L, ecx
     mov DWORD PTR R, eax
-    add R, 30
+    add R, ecx
     mov eax, globaly
     mov DWORD PTR T, eax
-    sub T, 30
+    sub T, ecx
     mov DWORD PTR B, eax
-    add B, 30
+    add B, ecx
+    pop ecx
     pop eax
     mov color, 000000FFh        ; red dot (RGB(255,0,0)
 
@@ -234,6 +237,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
