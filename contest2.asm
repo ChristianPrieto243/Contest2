@@ -50,7 +50,7 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
     ; Game state variables
     score       DWORD 0
     targetCount     DWORD 100
-    targetMaxHealth    DWORD 100
+    targetMaxHealth    DWORD 3
     targetSize  DWORD 30
     targetActive DWORD 1
     globalx DWORD 100
@@ -73,6 +73,20 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 ;=================== CODE =========================
 .code
 
+;-----------------------------------------------------
+initializeTargets PROC
+    push ecx
+    push esi
+    mov ecx, 0
+    mov esi, OFFSET targets
+
+
+
+
+
+    pop esi
+    pop ecx
+initializeTargets ENDP
 ;-----------------------------------------------------
 DrawAllTargets PROC
 ; Draws all active targets on the window
@@ -237,6 +251,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
