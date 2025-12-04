@@ -1,8 +1,29 @@
 ; contest2.asm - Aim Trainer Game
 ; Win32 GUI application using GraphWin.inc 
-
 INCLUDE Irvine32.inc
 INCLUDE GraphWin.inc
+INCLUDELIB gdi32.lib
+
+; NOTE: Additional Win32 constants and structures not in GraphWin.inc
+; Learned from MSDN documentation
+WM_PAINT = 0Fh
+
+PAINTSTRUCT STRUCT
+    hdc         DWORD ?
+    fErase      DWORD ?
+    rcPaint_left   DWORD ?
+    rcPaint_top    DWORD ?
+    rcPaint_right  DWORD ?
+    rcPaint_bottom DWORD ?
+    fRestore    DWORD ?
+    fIncUpdate  DWORD ?
+    rgbReserved BYTE 32 DUP(?)
+PAINTSTRUCT ENDS
+
+; External GDI function declarations
+BeginPaint PROTO, hwnd:DWORD, lpPaint:DWORD
+EndPaint PROTO, hwnd:DWORD, lpPaint:DWORD
+Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 
 ;==================== DATA =======================
 .data
@@ -23,37 +44,87 @@ INCLUDE GraphWin.inc
     targetMaxHealth    DWORD 100
     targetSize  DWORD 30
     targetActive DWORD 1
-
+    
+    ; Target structure definition
     Target STRUCT
-        x DWORD 0 ; change to random value
-        y DWORD 0 ; change to random value
-        health WORD 3; amount of health the targets have
+        x DWORD 0      ; X position
+        y DWORD 0      ; Y position
+        health WORD 3  ; Health points
     Target ENDS
-    targets Target 9 DUP(<>) ; Create targets with max count
+    targets Target 9 DUP(<>)  ; Array of 9 targets
+    
+    ; NOTE: GDI drawing not learned in class
+    ; Learned from MSDN documentation for Ellipse and BeginPaint/EndPaint
+    ps PAINTSTRUCT <>  ; Paint structure
+    hdc DWORD ?        ; Device context handle (global for DrawAllTargets)
 
+;=================== CODE =========================
 .code
 
+;-----------------------------------------------------
+DrawAllTargets PROC
+; Draws all active targets on the window
+; NOTE: Separate function for reusability - can call from:
+;   1. WM_PAINT (Windows requests redraw)
+;   2. After mouse clicks (immediate update)
+;   3. Game loop (for animations later)
+; Assumes hdc is already set by caller (BeginPaint)
+;-----------------------------------------------------
+    ; Draw test circle at (100, 100) with radius 30
+    ; Ellipse parameters: hdc, left, top, right, bottom
+    ; For circle centered at (100,100) with radius 30:
+    ; left = 70, top = 70, right = 130, bottom = 130
+    INVOKE Ellipse, hdc, 70, 70, 130, 130
+    
+    ; TODO: Loop through targets array and draw all
+    ; TODO: Change color based on target health
+    ; TODO: Add score display text
+    ; TODO: Add timer display text
+    
+    ret
+DrawAllTargets ENDP
+
+;-----------------------------------------------------
 WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
 ; The application's message handler
-
+;-----------------------------------------------------
     mov eax, localMsg
     
-    .IF eax == WM_LBUTTONDOWN ; Handle lmb
-        ; Extract X,Y from lParam
+    .IF eax == WM_PAINT
+        ; NOTE: BeginPaint/EndPaint and Ellipse not learned in class
+        ; Learned from MSDN Win32 GDI documentation
         
+        ; Begin painting - get device context
+        INVOKE BeginPaint, hWnd, ADDR ps
+        mov hdc, eax
+        
+        ; Call our drawing function
+        call DrawAllTargets
+        
+        ; End painting - release device context
+        INVOKE EndPaint, hWnd, ADDR ps
+        jmp WinProcExit
+        
+    .ELSEIF eax == WM_LBUTTONDOWN
+        ; Handle left mouse button click
+        ; Extract X,Y from lParam
         pushad
-        mov eax, lParam ; X and Y lParam here (least signicant 4 bytes are X and most significant 4 Bytes are Y)
-        ; Check if hit target
+        mov eax, lParam  ; Low word = X, High word = Y
+        
+        ; TODO: Check if hit target (distance formula)
+        ; TODO: Update targets array (swap-and-pop if killed)
+        ; TODO: Call InvalidateRect to trigger redraw
         
         popad
-        
         jmp WinProcExit
         
     .ELSEIF eax == WM_CLOSE
+        ; Handle window close
         INVOKE PostQuitMessage, 0
         jmp WinProcExit
         
     .ELSE
+        ; Default handling for all other messages
         INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
         jmp WinProcExit
     .ENDIF
@@ -64,6 +135,7 @@ WinProc ENDP
 
 ;-----------------------------------------------------
 WinMain PROC
+; Main entry point
 ;-----------------------------------------------------
     ; Get a handle to the current process
     INVOKE GetModuleHandle, NULL
@@ -83,7 +155,7 @@ WinMain PROC
         jmp Exit_Program
     .ENDIF
     
-    ; Create the application's main window
+    ; Create the application's main window (800x600)
     INVOKE CreateWindowEx, 0, ADDR className,
            ADDR WindowName, MAIN_WINDOW_STYLE,
            CW_USEDEFAULT, CW_USEDEFAULT, 
@@ -113,8 +185,3 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
-
-
-
-
-
