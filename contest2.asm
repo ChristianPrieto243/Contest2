@@ -81,8 +81,13 @@ DrawAllTargets PROC
     LOCAL hBrush:DWORD
     LOCAL hOldBrush:DWORD
 
-    mov x, globalx
-    mov y, globaly
+    push eax
+    mov eax, globalx
+    mov DWORD PTR x, eax
+    
+    mov eax, globaly
+    mov DWORD PTR y, eax
+    pop eax
     mov color, 000000FFh        ; red dot (RGB(255,0,0)
 
     ; Create solid brush for the fill
@@ -218,6 +223,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
