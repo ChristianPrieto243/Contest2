@@ -64,20 +64,40 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 ;-----------------------------------------------------
 DrawAllTargets PROC
 ; Draws all active targets on the window
-; NOTE: Separate function for reusability - can call from:
-;   1. WM_PAINT (Windows requests redraw)
-;   2. After mouse clicks (immediate update)
-;   3. Game loop (for animations later)
-; Assumes hdc is already set by caller (BeginPaint)
-;-----------------------------------------------------
-    ; Draw test circle at (100, 100) with radius 30
-    ; Ellipse parameters: hdc, left, top, right, bottom
-    ; For circle centered at (100,100) with radius 30:
-    ; left = 70, top = 70, right = 130, bottom = 130
-    INVOKE Ellipse, hdc, -targetSize, -targetSize, targetSize, targetSize
+     invoke BeginPaint, hWnd, addr ps
+    mov hdc, eax
+
+    LOCAL x:DWORD
+    LOCAL y:DWORD
+    LOCAL color:DWORD
+    LOCAL hBrush:HBRUSH
+    LOCAL hOldBrush:HGDIOBJ
+
+    mov x, 150
+    mov y, 150
+    mov color, RGB(255,0,0)        ; red dot
+
+    ; Create solid brush for the fill
+    invoke CreateSolidBrush, color
+    mov hBrush, eax
+
+    ; Select brush
+    invoke SelectObject, hdc, hBrush
+    mov hOldBrush, eax
+
+    ; Draw a 30x30 ellipse
+    invoke Ellipse, hdc, x, y, x+30, y+30
+
+    ; Restore old brush
+    invoke SelectObject, hdc, hOldBrush
+
+    ; Delete new brush
+    invoke DeleteObject, hBrush
     
     ; TODO: Loop through targets array and draw all
+
     ; TODO: Change color based on target health
+    
     ; TODO: Add score display text
     ; TODO: Add timer display text
     
@@ -185,5 +205,6 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
