@@ -3,11 +3,6 @@
 INCLUDE Irvine32.inc
 INCLUDE GraphWin.inc
 
-INCLUDE windows.inc
-INCLUDE user32.inc
-INCLUDE gdi32.inc
-
-INCLUDELIB user32.lib
 INCLUDELIB gdi32.lib
 
 
@@ -64,6 +59,11 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
     ; Learned from MSDN documentation for Ellipse and BeginPaint/EndPaint
     ps PAINTSTRUCT <>  ; Paint structure
     hdc DWORD ?        ; Device context handle (global for DrawAllTargets)
+    EXTERN CreateSolidBrush :PROTO :DWORD
+    EXTERN DeleteObject     :PROTO :DWORD
+    EXTERN SelectObject     :PROTO :DWORD, :DWORD
+    EXTERN Ellipse          :PROTO :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+
 
 ;=================== CODE =========================
 .code
@@ -210,6 +210,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
