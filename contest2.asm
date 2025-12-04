@@ -42,7 +42,7 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         ; Extract X,Y from lParam
         
         pushad
-        mov eax, lParam ; X and Y lParam here
+        mov eax, lParam ; X and Y lParam here (least signicant 4 bytes are X and most significant 4 Bytes are Y)
         ; Check if hit target
         
         popad
@@ -113,6 +113,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
