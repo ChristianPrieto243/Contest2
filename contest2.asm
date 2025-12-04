@@ -45,7 +45,19 @@ WinMain PROC
     mov wc.cbSize, SIZEOF WNDCLASSEX
     mov wc.style, CS_HREDRAW or CS_VREDRAW
     mov wc.lpfnWndProc, OFFSET WndProc
+    ; Load the program's icon and cursor.
+    INVOKE LoadIcon, NULL, IDI_APPLICATION
+    mov MainWin.hIcon, eax
+    INVOKE LoadCursor, NULL, IDC_ARROW
+    mov MainWin.hCursor, eax
+    ; Register the window class.
+    INVOKE RegisterClass, ADDR MainWin
+    .IF eax == 0
+    call ErrorHandler
+    jmp Exit_Program
+    .ENDIF
 Exit_Program:
 INVOKE ExitProcess,0
 WinMain ENDP
+
 
