@@ -60,7 +60,7 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
     Target STRUCT
         x DWORD 0      ; X position
         y DWORD 0      ; Y position
-        health WORD 3  ; Health points
+        health DWORD 3  ; Health points
     Target ENDS
     targets Target 9 DUP(<>)  ; Array of 9 targets - change initialize function if target count is changed
     
@@ -263,6 +263,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
