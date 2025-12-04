@@ -22,6 +22,11 @@ PAINTSTRUCT STRUCT
     rgbReserved BYTE 32 DUP(?)
 PAINTSTRUCT ENDS
 
+EXTERN CreateSolidBrush :PROTO :DWORD
+EXTERN DeleteObject     :PROTO :DWORD
+EXTERN SelectObject     :PROTO :DWORD, :DWORD
+EXTERN Ellipse          :PROTO :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+
 ; External GDI function declarations
 BeginPaint PROTO, hwnd:DWORD, lpPaint:DWORD
 EndPaint PROTO, hwnd:DWORD, lpPaint:DWORD
@@ -59,28 +64,24 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
     ; Learned from MSDN documentation for Ellipse and BeginPaint/EndPaint
     ps PAINTSTRUCT <>  ; Paint structure
     hdc DWORD ?        ; Device context handle (global for DrawAllTargets)
-    EXTERN CreateSolidBrush :PROTO :DWORD
-    EXTERN DeleteObject     :PROTO :DWORD
-    EXTERN SelectObject     :PROTO :DWORD, :DWORD
-    EXTERN Ellipse          :PROTO :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
 
 
 ;=================== CODE =========================
 .code
 
 ;-----------------------------------------------------
-DrawAllTargets PROC hdc:HDC
+DrawAllTargets PROC
 ; Draws all active targets on the window
 
     LOCAL x:DWORD
     LOCAL y:DWORD
     LOCAL color:DWORD
-    LOCAL hBrush:HBRUSH
-    LOCAL hOldBrush:HGDIOBJ
+    LOCAL hBrush:DWORD
+    LOCAL hOldBrush:DWORD
 
     mov x, 150
     mov y, 150
-    mov color, RGB(255,0,0)        ; red dot
+    mov color, 000000FFh        ; red dot (RGB(255,0,0)
 
     ; Create solid brush for the fill
     invoke CreateSolidBrush, color
@@ -124,7 +125,7 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         mov hdc, eax
         
         ; Call our drawing function
-        invoke DrawAllTargets, hdc
+        invoke DrawAllTargets
         
         ; End painting - release device context
         INVOKE EndPaint, hWnd, ADDR ps
@@ -210,6 +211,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
