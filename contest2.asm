@@ -9,6 +9,8 @@ INCLUDELIB user32.lib
 WM_PAINT = 0Fh
 WM_LBUTTONDOWN = 201h
 WM_CLOSE = 10h
+WM_KEYDOWN = 100h
+VK_R = 52h          ; 'R' key
 TRANSPARENT = 1
 
 IFNDEF PAINTSTRUCT
@@ -118,6 +120,9 @@ SRCCOPY = 00CC0020h
     globalx DWORD 100
     globaly DWORD 100
     
+    ; Game State
+    gameActive DWORD 1
+    
     ; Timer variables
     roundStartTime DWORD 0
     currentTime DWORD 0
@@ -130,6 +135,9 @@ SRCCOPY = 00CC0020h
     
     timerLabel BYTE "Time: ", 0
     timerBuffer BYTE 12 DUP(0)
+    
+    roundOverMsg BYTE "Round Over! Press R to restart", 0
+    roundOverBuffer BYTE 40 DUP(0)
     
     Target STRUCT
         x DWORD 0
@@ -285,6 +293,14 @@ DrawTimer PROC
 TimePositive:
     mov remainingSeconds, eax
     
+    cmp eax, 0
+    jne TimerStillGoing
+    
+    ; Time's up! End the round
+    mov gameActive, 0
+    
+TimerStillGoing:
+    
     mov edi, OFFSET timerBuffer
     mov esi, OFFSET timerLabel
     
@@ -334,6 +350,45 @@ PopTimerDigits:
     pop eax
     ret
 DrawTimer ENDP
+
+;-----------------------------------------------------
+DrawRoundOver PROC
+    push eax
+    push ecx
+    push edx
+    
+    mov edi, OFFSET roundOverBuffer
+    mov esi, OFFSET roundOverMsg
+    
+    CopyRoundMsg:
+    mov al, [esi]
+    test al, al
+    jz DoneRoundMsg
+    mov [edi], al
+    inc esi
+    inc edi
+    jmp CopyRoundMsg
+    
+    DoneRoundMsg:
+    mov BYTE PTR [edi], 0
+    
+    mov ecx, edi
+    sub ecx, OFFSET roundOverBuffer
+    
+    mov eax, nClientWidth
+    shr eax, 1
+    sub eax, 120
+    
+    mov edx, nClientHeight
+    shr edx, 1
+    
+    INVOKE TextOutA, hMemDC, eax, edx, OFFSET roundOverBuffer, ecx
+    
+    pop edx
+    pop ecx
+    pop eax
+    ret
+DrawRoundOver ENDP
 
 ;-----------------------------------------------------
 DrawAllTargets PROC
@@ -444,6 +499,12 @@ DoneDrawing:
     call DrawScore
     call DrawTimer
     
+    cmp gameActive, 0
+    jne SkipRoundOver
+    call DrawRoundOver
+    
+SkipRoundOver:
+    
     ret
 DrawAllTargets ENDP
 
@@ -462,8 +523,13 @@ CheckClick:
     
 CheckClose:
     cmp eax, WM_CLOSE
-    jne DoDefault       
+    jne CheckKeyDown
     jmp HandleClose     
+    
+CheckKeyDown:
+    cmp eax, WM_KEYDOWN
+    jne DoDefault
+    jmp HandleKeyDown
     
 DoDefault:
     INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
@@ -479,6 +545,9 @@ HandlePaint:
     jmp WinProcExit
     
 HandleClick:
+    cmp gameActive, 0
+    je ClickIgnored
+    
     pushad
     mov eax, lParam
     movzx ebx, ax
@@ -566,11 +635,29 @@ HitDetected:
     popad
     jmp WinProcExit
     
+ClickIgnored:
+    jmp WinProcExit
+
 HandleClose:
     INVOKE SelectObject, hMemDC, hOldBitmap
     INVOKE DeleteObject, hBitmap
     INVOKE DeleteDC, hMemDC
     INVOKE PostQuitMessage, 0
+    jmp WinProcExit
+    
+HandleKeyDown:
+    mov eax, wParam
+    cmp eax, VK_R
+    jne WinProcExit
+    
+    mov score, 0
+    mov gameActive, 1
+    
+    INVOKE GetTickCount
+    mov roundStartTime, eax
+    
+    call initializeTargets
+    
     jmp WinProcExit
     
 WinProcExit:
@@ -591,6 +678,18 @@ WinMain PROC
         jmp Exit_Program
     .ENDIF
     
+    ; =========================================================
+    ; FIX: Initialize State BEFORE Showing Window
+    ; =========================================================
+    
+    ; 1. Start the clock
+    INVOKE GetTickCount
+    mov roundStartTime, eax
+    
+    ; 2. Initialize targets
+    call initializeTargets
+    
+    ; 3. Create the window
     INVOKE CreateWindowEx, 0, ADDR className,
            ADDR WindowName, MAIN_WINDOW_STYLE,
            CW_USEDEFAULT, CW_USEDEFAULT, 
@@ -601,9 +700,11 @@ WinMain PROC
         jmp Exit_Program
     .ENDIF
     
+    ; 4. Show Window (Triggers first WM_PAINT)
     INVOKE ShowWindow, hMainWnd, SW_SHOW
     INVOKE UpdateWindow, hMainWnd
     
+    ; 5. Setup Double Buffering
     INVOKE GetDC, hMainWnd
     mov hdc, eax
     INVOKE CreateCompatibleDC, hdc
@@ -613,11 +714,6 @@ WinMain PROC
     INVOKE SelectObject, hMemDC, hBitmap
     mov hOldBitmap, eax
     INVOKE ReleaseDC, hMainWnd, hdc
-    
-    call initializeTargets
-    
-    INVOKE GetTickCount
-    mov roundStartTime, eax
     
 Message_Loop:
     INVOKE GetMessage, ADDR msg, NULL, NULL, NULL
