@@ -38,9 +38,21 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
 
     mov eax, localMsg
     
-    .IF eax == WM_LBUTTONDOWN
-        ; mouse click handling logic here ?
+    .IF eax == WM_LBUTTONDOWN ; Handle lmb
         ; Extract X,Y from lParam
+        ; X lParam here
+        pushad
+        mov ecx, 4
+        mov ebx, 10
+        mov eax, lParam
+        conv :
+        mov dx, 0
+        div bx
+        xor dl, 30h
+        mov esi, ecx
+        mov[popupx + esi - 1], dl
+        loop conv
+        popad
         ; Check if hit target
         jmp WinProcExit
         
@@ -108,5 +120,6 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
