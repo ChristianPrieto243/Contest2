@@ -162,46 +162,76 @@ DrawAllTargets PROC
     LOCAL hBrush_Target:DWORD
     LOCAL hBrush_BG:DWORD
     LOCAL hOldBrush:DWORD
+    LOCAL currentTarget:DWORD
 
-    push eax
-    push ecx
-    
-    mov ecx, targetSize
-    mov eax, globalx
-    mov L, eax
-    sub L, ecx
-    mov R, eax
-    add R, ecx
-    mov eax, globaly
-    mov T, eax
-    sub T, ecx
-    mov B, eax
-    add B, ecx
-    
-    pop ecx
-    pop eax
-    
-    mov color, 000000FFh
-    
     ; Fill background black
     invoke CreateSolidBrush, 00000000h
     mov hBrush_BG, eax
     invoke SelectObject, hMemDC, hBrush_BG
     mov hOldBrush, eax
     invoke Rectangle, hMemDC, 0, 0, nClientWidth, nClientHeight
+    invoke SelectObject, hMemDC, hOldBrush
+    invoke DeleteObject, hBrush_BG
     
-    ; Create target brush
+    ; Loop through all targets and draw each one
+    push ecx
+    push esi
+    push eax
+    push ebx
+    
+    mov ecx, 9              ; Loop through 9 targets
+    mov esi, OFFSET targets
+    
+DrawTargetLoop:
+    ; Calculate address of current target
+    mov eax, 9
+    sub eax, ecx            ; eax = index (0 to 8)
+    mov ebx, SIZEOF Target
+    imul eax, ebx
+    add eax, esi
+    mov currentTarget, eax
+    
+    ; Get target position
+    mov ebx, currentTarget
+    mov eax, (Target PTR [ebx]).x
+    mov edx, (Target PTR [ebx]).y
+    
+    ; Calculate bounds
+    push ecx
+    mov ecx, targetSize
+    mov L, eax
+    sub L, ecx
+    mov R, eax
+    add R, ecx
+    mov T, edx
+    sub T, ecx
+    mov B, edx
+    add B, ecx
+    pop ecx
+    
+    ; Determine color based on health
+    ; For now just use green (will add health-based colors later)
+    mov color, 0000FF00h    ; Green
+    
+    ; Create brush
+    push ecx
     invoke CreateSolidBrush, color
     mov hBrush_Target, eax
-    invoke SelectObject, hMemDC, hBrush_Target
     
-    ; Draw test circle
+    ; Select brush and draw
+    invoke SelectObject, hMemDC, hBrush_Target
     invoke Ellipse, hMemDC, L, T, R, B
     
-    ; Restore and cleanup
-    invoke SelectObject, hMemDC, hOldBrush
+    ; Cleanup
     invoke DeleteObject, hBrush_Target
-    invoke DeleteObject, hBrush_BG
+    pop ecx
+    
+    loop DrawTargetLoop
+    
+    pop ebx
+    pop eax
+    pop esi
+    pop ecx
     
     ret
 DrawAllTargets ENDP
