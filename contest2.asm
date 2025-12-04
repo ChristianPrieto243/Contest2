@@ -45,4 +45,7 @@ WinMain PROC
     mov wc.cbSize, SIZEOF WNDCLASSEX
     mov wc.style, CS_HREDRAW or CS_VREDRAW
     mov wc.lpfnWndProc, OFFSET WndProc
+Exit_Program:
+INVOKE ExitProcess,0
+WinMain ENDP
 
