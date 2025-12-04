@@ -9,11 +9,6 @@ option casemap:none
 INCLUDE Irvine32.inc
 INCLUDE GraphWin.inc
 
-; Links
-INCLUDELIB user32.lib
-INCLUDELIB kernel32.lib
-INCLUDELIB Irvine32.lib
-
 .data
     ; Window class and title strings
     className   BYTE "AimTrainerWinClass", 0
@@ -71,6 +66,7 @@ WinMain PROC
 Exit_Program:
 INVOKE ExitProcess,0
 WinMain ENDP
+
 
 
 
