@@ -105,8 +105,8 @@ SRCCOPY = 00CC0020h
     hMainWnd DWORD ?
     hInstance DWORD ?
     
-    nClientWidth DWORD 800
-    nClientHeight DWORD 600
+    nClientWidth DWORD 1920
+    nClientHeight DWORD 1080
     
     hMemDC DWORD ?
     hBitmap DWORD ?
@@ -144,7 +144,7 @@ SRCCOPY = 00CC0020h
         y DWORD 0
         health DWORD 4
     Target ENDS
-    targets Target 9 DUP(<>)
+    targets Target 15 DUP(<>)
     
     ps PAINTSTRUCT <>
     hdc DWORD ?
@@ -200,7 +200,7 @@ TargetLoop:
     mov (Target PTR [ebx]).health, edx
     
     inc ecx
-    cmp ecx, 9
+    cmp ecx, 15
     jl TargetLoop
     
     pop ebx
@@ -416,11 +416,11 @@ DrawAllTargets PROC
     push eax
     push ebx
     
-    mov ecx, 9
+    mov ecx, 15
     mov esi, OFFSET targets
     
 DrawTargetLoop:
-    mov eax, 9
+    mov eax, 15
     sub eax, ecx
     mov ebx, SIZEOF Target
     imul eax, ebx
@@ -551,11 +551,11 @@ HandleClick:
     shr eax, 16
     movzx edx, ax
     
-    mov ecx, 9
+    mov ecx, 15
     mov esi, OFFSET targets
     
 CheckHitLoop:
-    mov eax, 9
+    mov eax, 15
     sub eax, ecx
     push ebx
     mov ebx, SIZEOF Target
