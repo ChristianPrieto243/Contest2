@@ -62,7 +62,7 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
         y DWORD 0      ; Y position
         health WORD 3  ; Health points
     Target ENDS
-    targets Target 9 DUP(<>)  ; Array of 9 targets
+    targets Target 9 DUP(<>)  ; Array of 9 targets - change initialize function if target count is changed
     
     ; NOTE: GDI drawing not learned in class
     ; Learned from MSDN documentation for Ellipse and BeginPaint/EndPaint
@@ -77,13 +77,25 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 initializeTargets PROC
     push ecx
     push esi
+    push edx
     mov ecx, 0
+    mov edx, targetMaxHealth
     mov esi, OFFSET targets
+    TargetLoop:
+    ; address of current target = esi + ecx*TargetSize
+    mov eax, ecx
+    imul eax, SIZEOF Target
+    add eax, esi             ; eax = &targets[ecx]
 
-
-
-
-
+    ; write x and y
+    mov (Target PTR [eax]).x, 10 ; 10 is temp for random x
+    mov (Target PTR [eax]).y, 10 ; 10 is temp for random y
+    
+    mov (Target PTR [eax]).health, edx ; give max health
+    inc ecx
+    cmp ecx, 9 ;max targets
+    jl TargetLoop
+    pop edx
     pop esi
     pop ecx
 initializeTargets ENDP
@@ -251,6 +263,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
