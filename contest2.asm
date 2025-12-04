@@ -30,3 +30,19 @@ INCLUDELIB Irvine32.lib
     targetY     DWORD 100
     targetSize  DWORD 30
     targetActive DWORD 1
+.code
+
+WinMain PROC
+    LOCAL wc:WNDCLASSEX
+    LOCAL msg:MSG
+    LOCAL hInstance:DWORD
+    
+    ; Get current instance handle 
+    INVOKE GetModuleHandle, NULL
+    mov hInstance, eax
+    
+    ; Fill in window class structure
+    mov wc.cbSize, SIZEOF WNDCLASSEX
+    mov wc.style, CS_HREDRAW or CS_VREDRAW
+    mov wc.lpfnWndProc, OFFSET WndProc
+
