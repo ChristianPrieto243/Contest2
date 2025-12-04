@@ -121,8 +121,8 @@ DrawAllTargets PROC
     LOCAL T:DWORD ;top
     LOCAL B:DWORD ;bottom
     LOCAL color:DWORD
-    LOCAL hBrush_Red:DWORD
-    LOCAL hBrush_Black:DWORD
+    LOCAL hBrush_Target:DWORD
+    LOCAL hBrush_BG:DWORD
     LOCAL hOldBrush:DWORD
 
     push eax
@@ -145,18 +145,18 @@ DrawAllTargets PROC
     
     ; fill background
     invoke CreateSolidBrush, 00000000h       ; Black (0x00BBGGRR)
-    mov hBrush_Black, eax
+    mov hBrush_BG, eax
     ; Select Black Brush
-    invoke SelectObject, hMemDC, hBrush_Black
+    invoke SelectObject, hMemDC, hBrush_BG
     mov hOldBrush, eax ; Save the brush originally selected in hMemDC
     invoke Rectangle, hMemDC, 0, 0, nClientWidth, nClientHeight ; Fill the whole background
     
     ; Create solid brush for the fill
     invoke CreateSolidBrush, color
-    mov hBrush, eax
+    mov hBrush_Target, eax
     
     ; Select brush
-    invoke SelectObject, hdc, hBrush
+    invoke SelectObject, hMemDC, hBrush_Target
     mov hOldBrush, eax
 
     
@@ -168,8 +168,8 @@ DrawAllTargets PROC
     invoke SelectObject, hMemDC, hOldBrush
 
     ; Delete new brush
-    invoke DeleteObject, hBrush
-    
+    invoke DeleteObject, hBrush_Target
+    invoke DeleteObject, hBrush_BG
     ; TODO: Loop through targets array and draw all
 
     ; TODO: Change color based on target health
@@ -289,6 +289,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
