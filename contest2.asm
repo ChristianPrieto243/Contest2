@@ -138,9 +138,11 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         ; Extract X,Y from lParam
         pushad
         mov eax, lParam  ; Low word = X, High word = Y
-        movzx globalx, ax
+        movzx ecx, ax
+        mov DWORD PTR globalx, ecx
         shr eax, 16
-        movzx globaly, ax
+        movzx ecx, ax
+        mov DWORD PTR globaly, ecx
     
         ; TODO: Check if hit target (distance formula)
         ; TODO: Update targets array (swap-and-pop if killed)
@@ -216,6 +218,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
