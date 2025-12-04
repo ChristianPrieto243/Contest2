@@ -187,6 +187,7 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         
         ; End painting - release device context
         INVOKE EndPaint, hWnd, ADDR ps
+        invoke InvalidateRect, hWnd, NULL, TRUE ; use for constant updates like a game
         jmp WinProcExit
         
     .ELSEIF eax == WM_LBUTTONDOWN
@@ -205,7 +206,6 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         ; TODO: Call InvalidateRect to trigger redraw
         
         popad
-        invoke InvalidateRect, hWnd, NULL, TRUE
         jmp WinProcExit
         
     .ELSEIF eax == WM_CLOSE
@@ -275,6 +275,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
