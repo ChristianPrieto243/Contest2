@@ -154,6 +154,7 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         ; TODO: Call InvalidateRect to trigger redraw
         
         popad
+        invoke InvalidateRect, hWnd, NULL, TRUE
         jmp WinProcExit
         
     .ELSEIF eax == WM_CLOSE
@@ -223,6 +224,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
