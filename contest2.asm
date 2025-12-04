@@ -179,13 +179,13 @@ DrawAllTargets PROC
     push eax
     push ebx
     
-    mov ecx, 9              ; Loop through 9 targets
+    mov ecx, 9
     mov esi, OFFSET targets
     
 DrawTargetLoop:
     ; Calculate address of current target
     mov eax, 9
-    sub eax, ecx            ; eax = index (0 to 8)
+    sub eax, ecx
     mov ebx, SIZEOF Target
     imul eax, ebx
     add eax, esi
@@ -209,9 +209,8 @@ DrawTargetLoop:
     add B, ecx
     pop ecx
     
-    ; Determine color based on health
-    ; For now just use green (will add health-based colors later)
-    mov color, 0000FF00h    ; Green
+    ; Color based on health - for now just green
+    mov color, 0000FF00h
     
     ; Create brush
     push ecx
@@ -255,12 +254,87 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         
     .ELSEIF eax == WM_LBUTTONDOWN
         pushad
+        
+        ; Extract click coordinates
         mov eax, lParam
-        movzx ecx, ax
-        mov globalx, ecx
+        movzx ebx, ax           ; EBX = click X
         shr eax, 16
-        movzx ecx, ax
-        mov globaly, ecx
+        movzx edx, ax           ; EDX = click Y
+        
+        ; Loop through all targets to check for hit
+        mov ecx, 9
+        mov esi, OFFSET targets
+        
+    CheckHitLoop:
+        ; Calculate current target address
+        mov eax, 9
+        sub eax, ecx
+        push ebx
+        mov ebx, SIZEOF Target
+        imul eax, ebx
+        pop ebx
+        add eax, esi
+        push eax                ; Save target address
+        
+        ; Get target position
+        mov edi, eax
+        mov eax, (Target PTR [edi]).x
+        mov edi, (Target PTR [edi]).y
+        
+        ; Calculate distance squared
+        ; dx = clickX - targetX
+        sub eax, ebx
+        imul eax, eax           ; dx squared
+        
+        ; dy = clickY - targetY  
+        push eax
+        mov eax, edx
+        sub eax, edi
+        imul eax, eax           ; dy squared
+        
+        ; distance squared = dx squared + dy squared
+        pop edi
+        add eax, edi
+        
+        ; Check if hit (distance squared <= radius squared)
+        mov edi, targetSize
+        imul edi, edi           ; radius squared
+        
+        .IF eax <= edi
+            ; HIT! Respawn this target at new position
+            pop edi             ; Get target address back
+            
+            ; Generate new random X
+            push ebx
+            push ecx
+            push edx
+            mov eax, nClientWidth
+            sub eax, 60
+            call randomNum
+            add eax, 30
+            mov (Target PTR [edi]).x, eax
+            
+            ; Generate new random Y
+            mov eax, nClientHeight
+            sub eax, 60
+            call randomNum
+            add eax, 30
+            mov (Target PTR [edi]).y, eax
+            pop edx
+            pop ecx
+            pop ebx
+            
+            ; Increment score
+            inc score
+            
+            ; Exit loop - we hit one
+            jmp HitDetected
+        .ENDIF
+        
+        pop eax                 ; Clean up stack
+        loop CheckHitLoop
+        
+    HitDetected:
         popad
         jmp WinProcExit
         
