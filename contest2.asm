@@ -64,7 +64,6 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 ;-----------------------------------------------------
 DrawAllTargets PROC
 ; Draws all active targets on the window
-    invoke BeginPaint, hWnd, addr ps
     mov hdc, eax
 
     LOCAL x:DWORD
@@ -101,7 +100,6 @@ DrawAllTargets PROC
     ; TODO: Add score display text
     ; TODO: Add timer display text
 
-    invoke EndPaint, hWnd, addr ps
     ret
 DrawAllTargets ENDP
 
@@ -206,6 +204,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
