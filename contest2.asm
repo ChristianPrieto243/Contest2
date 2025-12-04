@@ -11,7 +11,6 @@ WM_LBUTTONDOWN = 201h
 WM_CLOSE = 10h
 TRANSPARENT = 1
 
-; Only define PAINTSTRUCT if GraphWin hasn't already defined it
 IFNDEF PAINTSTRUCT
 PAINTSTRUCT STRUCT
     hdc             DWORD ?
@@ -25,10 +24,6 @@ PAINTSTRUCT STRUCT
     rgbReserved     BYTE 32 DUP(?)
 PAINTSTRUCT ENDS
 ENDIF
-
-; ========================================================
-; SAFE GDI PROTO DECLARATIONS
-; ========================================================
 
 IFNDEF CreateSolidBrush
     CreateSolidBrush PROTO, :DWORD
@@ -90,7 +85,10 @@ IFNDEF Ellipse
     Ellipse PROTO, :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
 ENDIF
 
-; BitBlt constant
+IFNDEF GetTickCount
+    GetTickCount PROTO
+ENDIF
+
 SRCCOPY = 00CC0020h
 
 ;==================== DATA =======================
@@ -98,7 +96,6 @@ SRCCOPY = 00CC0020h
     WindowName BYTE "Aim Trainer Game", 0
     className  BYTE "AimTrainerWinClass", 0
     
-    ; MainWin WNDCLASS structure
     MainWin WNDCLASS <NULL, WinProc, NULL, NULL, NULL, NULL, NULL, \
                       COLOR_WINDOW, NULL, className>
     
@@ -106,16 +103,13 @@ SRCCOPY = 00CC0020h
     hMainWnd DWORD ?
     hInstance DWORD ?
     
-    ; Window dimensions
     nClientWidth DWORD 800
     nClientHeight DWORD 600
     
-    ; Double buffering variables
     hMemDC DWORD ?
     hBitmap DWORD ?
     hOldBitmap DWORD ?
     
-    ; Game state variables
     score       DWORD 0
     targetCount     DWORD 100
     targetMaxHealth     DWORD 3
@@ -124,9 +118,18 @@ SRCCOPY = 00CC0020h
     globalx DWORD 100
     globaly DWORD 100
     
-    ; Score display
+    ; Timer variables
+    roundStartTime DWORD 0
+    currentTime DWORD 0
+    elapsedSeconds DWORD 0
+    remainingSeconds DWORD 0
+    roundDuration DWORD 30
+    
     scoreLabel BYTE "Score: ", 0
     scoreBuffer BYTE 12 DUP(0)
+    
+    timerLabel BYTE "Time: ", 0
+    timerBuffer BYTE 12 DUP(0)
     
     Target STRUCT
         x DWORD 0
@@ -254,6 +257,85 @@ PopDigits:
 DrawScore ENDP
 
 ;-----------------------------------------------------
+DrawTimer PROC
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push edi
+    
+    INVOKE GetTickCount
+    mov currentTime, eax
+    
+    mov eax, currentTime
+    mov ebx, roundStartTime
+    sub eax, ebx
+    mov ebx, 1000
+    xor edx, edx
+    div ebx
+    mov elapsedSeconds, eax
+    
+    mov eax, roundDuration
+    sub eax, elapsedSeconds
+    
+    cmp eax, 0
+    jge TimePositive
+    mov eax, 0
+    
+TimePositive:
+    mov remainingSeconds, eax
+    
+    mov edi, OFFSET timerBuffer
+    mov esi, OFFSET timerLabel
+    
+CopyTimerLabel:
+    mov al, [esi]
+    test al, al
+    jz DoneTimerLabel
+    mov [edi], al
+    inc esi
+    inc edi
+    jmp CopyTimerLabel
+    
+DoneTimerLabel:
+    mov eax, remainingSeconds
+    mov ebx, 10
+    mov ecx, 0
+    
+PushTimerDigits:
+    xor edx, edx
+    div ebx
+    push edx
+    inc ecx
+    test eax, eax
+    jnz PushTimerDigits
+    
+PopTimerDigits:
+    pop eax
+    add al, '0'
+    mov [edi], al
+    inc edi
+    loop PopTimerDigits
+    
+    mov BYTE PTR [edi], 0
+    
+    mov ecx, edi
+    sub ecx, OFFSET timerBuffer
+    
+    mov eax, nClientWidth
+    sub eax, 100
+    
+    INVOKE TextOutA, hMemDC, eax, 10, OFFSET timerBuffer, ecx
+    
+    pop edi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+DrawTimer ENDP
+
+;-----------------------------------------------------
 DrawAllTargets PROC
     LOCAL L:DWORD
     LOCAL R:DWORD
@@ -349,19 +431,18 @@ ColorDone:
     invoke DeleteObject, hBrush_Target
     pop ecx
     
-    ; FIX 1: Replace loop with manual jump to solve range issue
     dec ecx
     jz DoneDrawing
     jmp DrawTargetLoop
     
 DoneDrawing:
-    
     pop ebx
     pop eax
     pop esi
     pop ecx
     
     call DrawScore
+    call DrawTimer
     
     ret
 DrawAllTargets ENDP
@@ -433,13 +514,11 @@ CheckHitLoop:
     mov edi, targetSize
     imul edi, edi
     
-    ; FIX 3: Replaced jg with jle/jmp pattern
     cmp eax, edi
-    jle IsHit           ; If distance <= radius, it is a hit
-    jmp NotHit          ; Otherwise, jump far away
+    jle IsHit
+    jmp NotHit
     
 IsHit:
-    ; HIT!
     pop edi
     push ebx
     push ecx
@@ -451,7 +530,6 @@ IsHit:
     cmp eax, 0
     jg StillAlive
     
-    ; Target Dead
     mov eax, nClientWidth
     sub eax, 60
     call randomNum
@@ -480,10 +558,9 @@ DoneDamage:
     
 NotHit:
     pop eax
-    ; FIX 2: Replace loop with manual jump to solve range issue
     dec ecx
-    jz HitDetected      ; If loop finishes (ecx=0), no hit was found, exit
-    jmp CheckHitLoop    ; Otherwise continue loop
+    jz HitDetected
+    jmp CheckHitLoop
     
 HitDetected:
     popad
@@ -538,6 +615,9 @@ WinMain PROC
     INVOKE ReleaseDC, hMainWnd, hdc
     
     call initializeTargets
+    
+    INVOKE GetTickCount
+    mov roundStartTime, eax
     
 Message_Loop:
     INVOKE GetMessage, ADDR msg, NULL, NULL, NULL
