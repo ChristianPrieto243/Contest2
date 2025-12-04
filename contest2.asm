@@ -26,6 +26,8 @@ EXTERN CreateSolidBrush :PROTO :DWORD
 EXTERN DeleteObject     :PROTO :DWORD
 EXTERN SelectObject     :PROTO :DWORD, :DWORD
 EXTERN Ellipse          :PROTO :DWORD, :DWORD, :DWORD, :DWORD, :DWORD
+EXTERN InvalidateRect :PROTO :DWORD, :DWORD, :DWORD
+
 
 ; External GDI function declarations
 BeginPaint PROTO, hwnd:DWORD, lpPaint:DWORD
@@ -224,6 +226,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
