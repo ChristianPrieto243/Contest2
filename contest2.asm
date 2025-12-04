@@ -40,20 +40,13 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
     
     .IF eax == WM_LBUTTONDOWN ; Handle lmb
         ; Extract X,Y from lParam
-        ; X lParam here
+        
         pushad
-        mov ecx, 4
-        mov ebx, 10
-        mov eax, lParam
-        conv :
-        mov dx, 0
-        div bx
-        xor dl, 30h
-        mov esi, ecx
-        mov[popupx + esi - 1], dl
-        loop conv
-        popad
+        mov eax, lParam ; X and Y lParam here
         ; Check if hit target
+        
+        popad
+        
         jmp WinProcExit
         
     .ELSEIF eax == WM_CLOSE
@@ -120,6 +113,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
