@@ -72,7 +72,12 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 
 ;=================== CODE =========================
 .code
-
+;-----------------------------------------------------
+randomNum PROC 
+    call randomize
+    call randomrange
+    ret
+randomNum ENDP
 ;-----------------------------------------------------
 initializeTargets PROC
     push ecx
@@ -88,9 +93,15 @@ initializeTargets PROC
     add eax, esi             ; eax = &targets[ecx]
 
     ; write x and y
-    mov (Target PTR [eax]).x, 10 ; 10 is temp for random x
-    mov (Target PTR [eax]).y, 10 ; 10 is temp for random y
-    
+    push edx
+    mov edx, eax
+    mov eax, 1280
+    CALL randomNum
+    mov (Target PTR [edx]).x, eax
+    mov eax, 720
+    CALL randomNum
+    mov (Target PTR [edx]).y, eax
+    pop edx
     mov (Target PTR [eax]).health, edx ; give max health
     inc ecx
     cmp ecx, 9 ;max targets
@@ -98,6 +109,7 @@ initializeTargets PROC
     pop edx
     pop esi
     pop ecx
+    ret
 initializeTargets ENDP
 ;-----------------------------------------------------
 DrawAllTargets PROC
@@ -263,6 +275,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
