@@ -469,16 +469,6 @@ DrawTargetLoop:
     add eax, healthPercent
     
     mov color, eax
-    jmp ColorDone
-    
-ColorGreen:
-    mov color, 0000FF00h
-    jmp ColorDone
-    
-ColorYellow:
-    mov color, 0000FFFFh
-    
-ColorDone:
     pop edx
     pop ecx
     
@@ -734,4 +724,5 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
