@@ -6,8 +6,6 @@
 option casemap:none
 
 ; Standard includes from Irvine32 environment
-INCLUDE user32.inc
-INCLUDE kernel32.inc
 INCLUDE Irvine32.inc
 INCLUDE GraphWin.inc
 
@@ -73,6 +71,7 @@ WinMain PROC
 Exit_Program:
 INVOKE ExitProcess,0
 WinMain ENDP
+
 
 
 
