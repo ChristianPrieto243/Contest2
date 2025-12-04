@@ -62,9 +62,8 @@ Ellipse PROTO, hdc:DWORD, left:DWORD, top:DWORD, right:DWORD, bottom:DWORD
 .code
 
 ;-----------------------------------------------------
-DrawAllTargets PROC
+DrawAllTargets PROC hdc:HDC
 ; Draws all active targets on the window
-    mov hdc, eax
 
     LOCAL x:DWORD
     LOCAL y:DWORD
@@ -118,7 +117,7 @@ WinProc PROC, hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
         mov hdc, eax
         
         ; Call our drawing function
-        call DrawAllTargets
+        invoke DrawAllTargets, hdc
         
         ; End painting - release device context
         INVOKE EndPaint, hWnd, ADDR ps
@@ -204,6 +203,7 @@ Exit_Program:
 WinMain ENDP
 
 END WinMain
+
 
 
 
